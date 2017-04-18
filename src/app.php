@@ -12,7 +12,7 @@ $params = [
     ['-c', '--config'        , true , 'Путь к конфигу с настройками почтовика'],
     ['-a', '--attach'        , true , 'Вложить файл в письмо как Attachment'],
     ['-i', '--related'       , true , 'Включить файл в письмо как Related (индентификатором при этом будет название файла)'],
-    [''  , '--html'          , false, 'Отправить письма как HTML'],
+    [''  , '--html'          , false, 'Отправить письмо как HTML'],
     ['-d', '--display-eml'   , false, 'Вывести содержимое письма в формате EML'],
     [''  , '--config-example', false, 'Показать пример конфига'],
     ['-h', '--help'          , false, 'Показать справочную информацию'],
@@ -61,12 +61,15 @@ $configExample = function() {
 <?php
 
 return [
-    'defaultFrom' => 'foo@bar',
-    'onError'     => function($error, $message, $transport) { echo $error, "\n"; },
-    'afterSend'   => function($text, $message, $layer) { echo $text, "\n"; },
+    'defaultFrom' => 'mymail@example.org',
+    'onError'     => function($error, $message, $transport) { echo $error; },
+    'afterSend'   => function($text, $message, $layer) { echo $text; },
     'transports'  => [
-        ['file', 'dir'  => strftime('/www/mails/%Y-%m/%d')],
-        ['smtp', 'host' => 'ssl://mail:495', 'login' => 'foo@bar', 'password' => '123'],
+        // Сохранение всех писем в папке
+        ['file', 'dir'  => __DIR__ .'/mails'],
+        
+        // Отправка писем через Yandex, используя SSL и авторизацию
+        ['smtp', 'host' => 'smtp.yandex.ru', 'ssl' => true, 'port' => '465', 'login' => '****@yandex.ru', 'password' => '******'],
     ],
 ];
 

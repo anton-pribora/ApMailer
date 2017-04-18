@@ -38,7 +38,7 @@ namespace ApMail {
          * $config = [
          *     'defaultFrom' => 'foo@bar',
          *     'onError'     => function($error, $message, $transport) { myErrorLog($error); },
-         *     'afterSend    => function($text, $message, $layer) { myMailLog($text); },
+         *     'afterSend'   => function($text, $message, $layer) { myMailLog($text); },
          *     'transports'  => [
          *         ['smtp', 'host' => 'ssl://mail:495', 'login' => 'foo@bar', 'password' => '123'],
          *         ['file', 'dir'  => strftime('/www/mails/%Y-%m/%d')],
@@ -178,8 +178,6 @@ namespace ApMail {
      *     var_dump($layer->getErrors());
      * }
      * 
-     * @author Anton Pribora <info@anton-pribora.ru>
-     * @package rake-engine
      */
     class Layer
     {

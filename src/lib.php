@@ -36,12 +36,14 @@ namespace ApMail {
         /**
          * @example 
          * $config = [
-         *     'defaultFrom' => 'foo@bar',
-         *     'onError'     => function($error, $message, $transport) { myErrorLog($error); },
-         *     'afterSend'   => function($text, $message, $layer) { myMailLog($text); },
+         *     'defaultFrom' => 'mymail@example.org',
+         * //  'onError'     => function($error, $message, $transport) { myErrorLog($error); },
+         * //  'afterSend'   => function($text, $message, $layer) { myMailLog($text); },
          *     'transports'  => [
-         *         ['smtp', 'host' => 'ssl://mail:495', 'login' => 'foo@bar', 'password' => '123'],
-         *         ['file', 'dir'  => strftime('/www/mails/%Y-%m/%d')],
+         *         ['file', 'dir'  => __DIR__ .'/mails'],
+         * //      ['smtp', 'host' => 'smtp.yandex.ru', 'port' => '465', 'login' => '****@yandex.ru', 'password' => '******'],
+         * //      ['smtp', 'host' => 'smtp.gmail.com', 'port' => '465', 'login' => '****@gmail.com', 'password' => '******'],
+         * //      ['smtp', 'host' => '192.168.0.1', 'timeout' => 30],
          *     ],
          * ];
          * @param array $config
@@ -52,7 +54,7 @@ namespace ApMail {
             $layer = new Layer();
             
             $defaultFrom = $conf('defaultFrom');
-            $onError     = $conf('onError', function($error) { trigger_error($error, \E_WARNING); });
+            $onError     = $conf('onError', function($error) { trigger_error($error, \E_USER_WARNING); });
             $afterSend   = $conf('afterSend');
             $transports  = $conf('transports', []);
             
@@ -263,9 +265,10 @@ namespace ApMail {
         private $login    = null;
         private $password = null;
         private $host     = null;
-        private $port     = null;
+        private $port     = 25;
         private $smtpAuth = true;
-        private $timeout  = 3;
+        private $timeout  = 10;
+        private $useSSL   = false;
         
         private $lastError     = null;
         private $lastErrorCode = null;
@@ -275,13 +278,17 @@ namespace ApMail {
         public function __construct(array $options = null)
         {
             if ( $options ) {
-                $this->login    = isset($options['login'   ]) ? $options['login'   ] : null;
-                $this->password = isset($options['password']) ? $options['password'] : null;
-                $this->host     = isset($options['host'    ]) ? $options['host'    ] : null;
-                $this->port     = isset($options['port'    ]) ? $options['port'    ] : 25;
-                $this->timeout  = isset($options['timeout' ]) ? $options['timeout' ] : 3;
+                $opt  = function($name, $default = null) use ($options) { return isset($options[$name]) ? $options[$name] : $default; };
+                $bool = function($name, $default = false) use ($opt) { return in_array($opt($name, $default), ['1', 'true', true, 1]); };
                 
-                $this->smtpAuth = in_array(isset($options['smtpAuth']) ? $options['smtpAuth'] : true, ['1', 'true', true, 1]);
+                $this->login    = $opt('login'   , $this->login);
+                $this->password = $opt('password', $this->password);
+                $this->host     = $opt('host'    , $this->host);
+                $this->port     = $opt('port'    , $this->port);
+                $this->timeout  = $opt('timeout' , $this->timeout);
+                
+                $this->useSSL   = $bool('ssl' , $this->useSSL);
+                $this->smtpAuth = $bool('auth', strlen($this->login) > 0);
             }
         }
         
@@ -333,7 +340,15 @@ namespace ApMail {
         
         private function openSocket()
         {
-            $this->socket = @stream_socket_client($this->host .':'. $this->port, $errorNumber, $errorDescription, 2);
+            $host = '';
+            
+            if ($this->useSSL) {
+                $host .= 'ssl://';
+            }
+            
+            $host .= "{$this->host}:{$this->port}";
+            
+            $this->socket = @stream_socket_client($host, $errorNumber, $errorDescription, 2);
             
             if ( !is_resource($this->socket) ) {
                 throw new Exception(sprintf('Не удалось подключиться к %s:%s. Ошибка %s: %s.',

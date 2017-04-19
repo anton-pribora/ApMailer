@@ -533,7 +533,7 @@ namespace ApMail {
      *
      * Порядок составления документа:
      * ------------------------------
-     * multipart/mixed           Составной дкумент (вложения + текст)
+     * multipart/mixed           Составной документ (вложения + текст)
      * |- multipart/alternative  Сообщение в нескольких форматах (простой текст + html)
      * |  |- text/plain          Простой текст
      * |  |- multipart/related   Составной документ (html + файлы)
@@ -572,7 +572,7 @@ namespace ApMail {
         }
     
         /**
-         * @return \ApCode\Mail\Message\Headers
+         * @return Headers
          */
         public function getHeaders()
         {
@@ -669,14 +669,14 @@ namespace ApMail {
             }
     
             $part = new Part();
-            $this->related[] = $part;
-    
             $part->setContentType($contentType)
                 ->setContentDisposition('inline')
                 ->setContentId($id)
                 ->setContent($data)
             ;
     
+            $this->related[] = $part;
+
             return $this;
         }
     

@@ -50,7 +50,6 @@ class MessageTest extends \PHPUnit\Framework\TestCase
 
         $eml = $message->toEml();
 
-        echo $eml;
         $this->assertContains('Content-type: multipart/alternative', $eml);
         $this->assertContains(chunk_split(base64_encode($htmlContent)), $eml);
     }

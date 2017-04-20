@@ -60,8 +60,8 @@ namespace ApMail {
             
             // Обратный адрес по умолчанию
             if ($defaultFrom) {
-                $layer->appendTrigger('beforeSend', function(Message $message) use($defaultFrom){
-                    if ( !$message->getSenderEmail() ) {
+                $layer->appendTrigger('beforeSend', function(Message $message) use ($defaultFrom){
+                    if (!$message->getSenderEmail()) {
                         $message->setSenderEmail($defaultFrom);
                     }
                 });
@@ -96,6 +96,7 @@ namespace ApMail {
             foreach ($transports as $options) {
                 $options = (array) $options;
                 $type    = array_shift($options);
+                
                 $layer->appendTranspport(
                     $this->newTransport($type, $options)
                 );
@@ -200,14 +201,14 @@ namespace ApMail {
             
             $this->launchTriggers('beforeSend', $message, $this);
             
-            foreach ( $this->transports as list($transport, $filter) ) {
-                if ( $filter ) {
-                    if ( !$filter($message) ) {
+            foreach ($this->transports as list($transport, $filter)) {
+                if ($filter) {
+                    if (!$filter($message)) {
                         continue;
                     }
                 }
                 
-                if ( !$transport->send($message) ) {
+                if (!$transport->send($message)) {
                     $this->launchTriggers('error', $message, $transport, $this);
                     $this->errors[] = $transport->getLastError();
                 }
@@ -230,19 +231,19 @@ namespace ApMail {
         
         public function appendTrigger($category, callable $function)
         {
-            if ( !isset($this->triggers[ $category ]) ) {
-                $this->triggers[ $category ] = [];
+            if (!isset($this->triggers[$category])) {
+                $this->triggers[$category] = [];
             }
             
-            $this->triggers[ $category ][] = $function;
+            $this->triggers[$category][] = $function;
             
             return $this;
         }
         
         private function launchTriggers($category, ...$args)
         {
-            if ( isset($this->triggers[ $category ]) ) {
-                foreach ( $this->triggers[ $category ] as $function ) {
+            if (isset($this->triggers[$category])) {
+                foreach ( $this->triggers[$category] as $function ) {
                     $function(...$args);
                 }
             }
@@ -304,7 +305,7 @@ namespace ApMail {
             try {
                 $this->openSocket();
                 
-                if ( $this->smtpAuth ) {
+                if ($this->smtpAuth) {
                     $this->smtpSend(250, 'EHLO [192.168.0.1]');
                     $this->smtpSend(334, 'AUTH LOGIN');
                     $this->smtpSend(334, base64_encode($this->login));
@@ -316,7 +317,7 @@ namespace ApMail {
                 
                 $this->smtpSend(250, 'MAIL FROM:<%s>', $message->getSenderEmail());
                 
-                foreach ( $message->getRecipientsEmailOnly() as $recipient ) {
+                foreach ($message->getRecipientsEmailOnly() as $recipient) {
                     $this->smtpSend(250, 'RCPT TO:<%s>', $recipient);
                 }
                 
@@ -350,7 +351,7 @@ namespace ApMail {
             
             $this->socket = @stream_socket_client($host, $errorNumber, $errorDescription, 2);
             
-            if ( !is_resource($this->socket) ) {
+            if (!is_resource($this->socket)) {
                 throw new Exception(sprintf('Не удалось подключиться к %s:%s. Ошибка %s: %s.',
                     (string) $this->host,
                     (string) $this->port,
@@ -363,26 +364,26 @@ namespace ApMail {
             
             $line = $this->socketRead();
             
-            if ( !preg_match('/^220\s/', $line) ) {
+            if (!preg_match('/^220\s/', $line)) {
                 throw new Exception('Не удалось установить соединение. Сервер вернул неожиданный ответ: '. $line, 101);
             }
         }
         
         private function smtpSend($expectedCode, $command, ...$args)
         {
-            if ( $args ) {
+            if ($args) {
                 $command = sprintf($command, ...$args);
             }
             
             $this->socketWrite($command ."\r\n");
             
-            while ( !feof($this->socket) ) {
+            while (!feof($this->socket)) {
                 $line = trim($this->socketRead());
                 
-                if ( preg_match('/^(\d{3})(?:\s+(.*))?$/', $line, $matches) ) {
+                if (preg_match('/^(\d{3})(?:\s+(.*))?$/', $line, $matches)) {
                     list(, $code, $text) = $matches;
                     
-                    if ( $code != $expectedCode ) {
+                    if ($code != $expectedCode) {
                         throw new Exception(sprintf('Cервер вернул неожиданный ответ: %s. Запрос: %s',
                             $line,
                             $command
@@ -398,14 +399,14 @@ namespace ApMail {
         
         private function closeSocket()
         {
-            if ( is_resource($this->socket) ) {
+            if (is_resource($this->socket)) {
                 fclose($this->socket);
             }
         }
         
         private function socketWrite($data)
         {
-            if ( !fwrite($this->socket, $data) ) {
+            if (!fwrite($this->socket, $data)) {
                 throw new Exception(sprintf('Не удалось записать данные в сокет: %s. Ошибка: %s',
                     $data,
                     error_get_last()['message']
@@ -417,7 +418,7 @@ namespace ApMail {
         {
             $data = fgets($this->socket);
             
-            if ( $data === false ) {
+            if ($data === false) {
                 throw new Exception(sprintf('Не удалось считать данные из сокета. Ошибка: %s',
                     error_get_last()['message']
                 ), 104);
@@ -433,7 +434,8 @@ namespace ApMail {
         
         public function __construct(array $options = null)
         {
-            if ( $options ) {
+            if ($options) {
+                // Если появятся опции, то прописывать их тут!
             }
         }
         
@@ -448,10 +450,10 @@ namespace ApMail {
             
             $result = @mail($recipients, $subject, $body, $headers);
             
-            if ( !$result ) {
+            if (!$result) {
                 $error = error_get_last();
                 
-                if ( $error ) {
+                if ($error) {
                     $this->lastError = 'PhpMail:'. $error['message'];
                 }
                 else {
@@ -468,7 +470,6 @@ namespace ApMail {
         }
     }
     
-    
     class File implements TransportInterface
     {
         private $saveDir      = null;
@@ -478,7 +479,7 @@ namespace ApMail {
         
         public function __construct(array $options = null)
         {
-            if ( $options ) {
+            if ($options) {
                 $this->saveDir = isset($options['dir']) ? rtrim($options['dir'], '/') : null;
             }
         }
@@ -507,15 +508,15 @@ namespace ApMail {
             $this->lastMailPath = $filename;
             
             if ($this->saveDir && !file_exists($this->saveDir) && $this->createDir) {
-                if (!mkdir($this->saveDir, 0755, true)) {
+                if (!@mkdir($this->saveDir, 0755, true)) {
                     $this->lastError = 'Can\'t create dir '. $this->saveDir;
                     return false;
                 }
             }
             
-            $result = file_put_contents($filename, (string) $message);
+            $result = @file_put_contents($filename, (string) $message);
             
-            if ( $result === false ) {
+            if ($result === false) {
                 $this->lastError = error_get_last()['message'];
             }
             
@@ -566,8 +567,8 @@ namespace ApMail {
             $this->setContentType('text/html; charset='. $this->charset);
             $this->headers
                 ->set('Mime-Version', '1.0')
-                ->set('Date', date(DATE_RFC1123))
-                ->set('Message-ID', sprintf('<%s.%s@%s>', (string) time(), uniqid(), gethostname()))
+                ->set('Date'        , date(DATE_RFC1123))
+                ->set('Message-ID'  , sprintf('<%s.%s@%s>', (string) time(), uniqid(), gethostname()))
             ;
         }
     
@@ -622,7 +623,7 @@ namespace ApMail {
     
         public function addRecipient($mail, $name = null)
         {
-            if ( $name ) {
+            if ($name) {
                 $this->recipients[] = "$name <$mail>";
                 $this->headers->add('To', $this->headers->encode($name) ." <$mail>");
             }
@@ -636,7 +637,7 @@ namespace ApMail {
     
         public function addCopyTo($mail, $name = null)
         {
-            if ( $name ) {
+            if ($name) {
                 $this->copyTo[] = $this->headers->encode($name) ." <$mail>";
                 $this->headers->add('Cc', $this->headers->encode($name) ." <$mail>");
             }
@@ -650,7 +651,7 @@ namespace ApMail {
     
         public function addHiddenCopy($mail, $name = null)
         {
-            if ( $name ) {
+            if ($name) {
                 $this->hiddenCopy[] = $this->headers->encode($name) ." <$mail>";
                 $this->headers->add('Bcc', $this->headers->encode($name) ." <$mail>");
             }
@@ -664,7 +665,7 @@ namespace ApMail {
     
         public function addRelatedString($data, $id, $contentType = null)
         {
-            if ( is_null($contentType) ) {
+            if (is_null($contentType)) {
                 $contentType = finfo_buffer(finfo_open(FILEINFO_MIME), $data);
             }
     
@@ -682,11 +683,11 @@ namespace ApMail {
     
         public function addRelatedFile($path, $id = null, $contentType = null)
         {
-            if ( is_null($id) ) {
+            if (is_null($id)) {
                 $id = basename($path);
             }
     
-            if ( is_null($contentType) ) {
+            if (is_null($contentType)) {
                 $contentType = finfo_file(finfo_open(FILEINFO_MIME), $path);
             }
     
@@ -704,15 +705,15 @@ namespace ApMail {
     
         public function addAttachmentString($data, $fileName, $contentType = null)
         {
-            if ( is_null($contentType) ) {
-                $contentType = finfo_buffer(finfo_open(FILEINFO_MIME), $data);
+            if (is_null($contentType)) {
+                $contentType = finfo_buffer(finfo_open(\FILEINFO_MIME), $data);
             }
     
             $part = new Part();
             $this->attachments[] = $part;
     
             $part->setContentType($contentType)
-                ->setContentDisposition('attachment; filename="'.$this->headers->encode($fileName) .'"')
+                ->setContentDisposition('attachment; filename="'. $this->headers->encode($fileName) .'"')
                 ->setContent($data)
             ;
     
@@ -721,12 +722,12 @@ namespace ApMail {
     
         public function addAttachmentFile($path, $fileName = null, $contentType = null)
         {
-            if ( is_null($fileName) ) {
+            if (is_null($fileName)) {
                 $fileName = basename($path);
             }
     
-            if ( is_null($contentType) ) {
-                $contentType = finfo_file(finfo_open(FILEINFO_MIME), $path);
+            if (is_null($contentType)) {
+                $contentType = finfo_file(finfo_open(\FILEINFO_MIME), $path);
             }
     
             $part = new Part();
@@ -752,7 +753,7 @@ namespace ApMail {
             // Если адреса кривые, можно расскомментировать следующую строку. Там не менее кривая функция, которая исправляет кривые адреса.
             // $recipients = Functions::mail2array($recipients);
     
-            if ( isset($separator) ) {
+            if (isset($separator)) {
                 return join($separator, $recipients);
             }
     
@@ -768,7 +769,7 @@ namespace ApMail {
         {
             $this->senderEmail = $email;
     
-            if ( $name ) {
+            if ($name) {
                 $this->headers->set('From', $this->headers->encode($name) ." <$email>");
             }
             else {
@@ -793,7 +794,7 @@ namespace ApMail {
             // Объявляем части письма
             $message = $this->content;
     
-            if ( $this->related ) {
+            if ($this->related) {
                 $related = new MultiPart('related');
                 $related->addPart($message);
     
@@ -804,7 +805,7 @@ namespace ApMail {
                 $message = $related;
             }
     
-            if ( $this->content->isHtml() ) {
+            if ($this->content->isHtml()) {
                 $alternative = new MultiPart('alternative');
     
                 $alternativeText = new Part();
@@ -822,11 +823,11 @@ namespace ApMail {
                 $message = $alternative;
             }
     
-            if ( $this->attachments ) {
+            if ($this->attachments) {
                 $mixed = new MultiPart('mixed');
                 $mixed->addPart($message);
     
-                foreach ( $this->attachments as $part ) {
+                foreach ($this->attachments as $part) {
                     $mixed->addPart($part);
                 }
     
@@ -843,11 +844,11 @@ namespace ApMail {
         
         public function set($header, $value, $encodeValue = false)
         {
-            if ( $encodeValue ) {
+            if ($encodeValue) {
                 $value = $this->encode($value);
             }
             
-            $this->storage[ $header ] = $value;
+            $this->storage[$header] = $value;
             return $this;
         }
         
@@ -857,15 +858,15 @@ namespace ApMail {
                 $value = $this->encode($value);
             }
             
-            if ( !isset($this->storage[ $header ]) ) {
-                $this->storage[ $header ] = $value;
+            if ( !isset($this->storage[$header]) ) {
+                $this->storage[$header] = $value;
             }
-            elseif ( is_array($this->storage[ $header ]) ) {
-                $this->storage[ $header ][] = $value;
+            elseif ( is_array($this->storage[$header]) ) {
+                $this->storage[$header][] = $value;
             }
             else {
-                $this->storage[ $header ] = [ $this->storage[$header] ];
-                $this->storage[ $header ][] = $value;
+                $this->storage[$header]   = [$this->storage[$header]];
+                $this->storage[$header][] = $value;
             }
             
             return $this;
@@ -873,7 +874,7 @@ namespace ApMail {
         
         public function has($header)
         {
-            return isset($this->storage[ $header ]);
+            return isset($this->storage[$header]);
         }
         
         public function remove($header)
@@ -884,7 +885,7 @@ namespace ApMail {
         
         public function getFirstOrArray($header)
         {
-            if ( !$this->has($header) ) {
+            if (!$this->has($header)) {
                 return null;
             }
             
@@ -893,28 +894,28 @@ namespace ApMail {
         
         public function getFirst($header)
         {
-            if ( !$this->has($header) ) {
+            if (!$this->has($header)) {
                 return null;
             }
             
-            if ( is_array($this->storage[ $header ]) ) {
-                return current($this->storage[ $header ]);
+            if (is_array($this->storage[$header]) ) {
+                return current($this->storage[$header]);
             }
             
-            return $this->storage[ $header ];
+            return $this->storage[$header];
         }
         
         public function getArray($header)
         {
-            if ( !$this->has($header) ) {
+            if (!$this->has($header)) {
                 return [];
             }
             
-            if ( is_array($this->storage[ $header ]) ) {
-                return $this->storage[ $header ];
+            if (is_array($this->storage[$header])) {
+                return $this->storage[$header];
             }
             
-            return [ $this->storage[ $header ] ];
+            return [$this->storage[$header]];
         }
         
         
@@ -922,9 +923,9 @@ namespace ApMail {
         {
             $result = '';
             
-            foreach ( $this->storage as $header => $value ) {
-                if ( is_array($value) ) {
-                    foreach ( $value as $subValue ) {
+            foreach ($this->storage as $header => $value) {
+                if (is_array($value)) {
+                    foreach ($value as $subValue) {
                         $result .= "$header: $subValue\r\n";
                     }
                 }
@@ -971,7 +972,7 @@ namespace ApMail {
         {
             $result = '';
             
-            foreach ( $this->parts as $part ) {
+            foreach ($this->parts as $part) {
                 $result .= '--'. $this->getBoundary() ."\r\n";
                 $result .= (string) $part ."\r\n";
             }
@@ -983,7 +984,7 @@ namespace ApMail {
         
         public function getBoundary()
         {
-            if ( is_null($this->boundary) ) {
+            if (is_null($this->boundary)) {
                 $this->boundary = str_pad(sha1(uniqid()), 46, '-', STR_PAD_LEFT);
             }
             
@@ -1024,7 +1025,7 @@ namespace ApMail {
         
         public function setHeaders($headers)
         {
-            foreach ( $headers as $header => $value ) {
+            foreach ($headers as $header => $value) {
                 $this->setHeader($header, $value);
             }
             
@@ -1076,32 +1077,22 @@ namespace ApMail {
             return $this->content;
         }
         
-        public function includeContent( $path )
+        public function includeContent($path)
         {
-            $this->content = file_get_contents($path);
+            $this->content .= file_get_contents($path);
             return $this;
         }
         
         public function __toString()
         {
             $content = $this->encodeContent();
-            return $this->headers ."\r\n". $content ."\r\n";
+            return $this->headers ."\r\n{$content}\r\n";
         }
         
         private function encodeContent()
         {
-            if ( true || !preg_match('~^text/~i', $this->getContentType()) ) {
-                $this->setContentTransferEncodig('base64');
-                return trim(chunk_split(base64_encode((string) $this->getContent())));
-            }
-            
-            $this->setContentTransferEncodig('8bit');
-            return trim(chunk_split((string) $this->getContent()));
-        }
-        
-        private function setContentTransferEncodig($encoding)
-        {
-            $this->headers->set('Content-Transfer-Encoding', $encoding);
+            $this->headers->set('Content-Transfer-Encoding', 'base64');
+            return trim(chunk_split(base64_encode((string) $this->getContent())));
         }
     }
     
@@ -1117,7 +1108,7 @@ namespace ApMail {
         {
             $result = array();
             
-            if ( is_array($mails) ) {
+            if (is_array($mails)) {
                 foreach ($mails as $mail) {
                     $array = self::mail2array($mail);
                     
@@ -1140,10 +1131,6 @@ namespace ApMail {
                 
                 foreach (preg_split('~[ ,;:/]+~', $mails) as $mail) {
                     $mail = trim($mail);
-                    
-                    if ( !$mail ) {
-                        continue;
-                    }
                     
                     if (self::isValidEmail($mail)) {
                         $result[] = $mail;

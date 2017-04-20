@@ -4,14 +4,19 @@ namespace tests\src;
 
 class MessageTest extends \PHPUnit\Framework\TestCase
 {
+    private function newMessage()
+    {
+        return Mailer()->newHtmlMessage();
+    }
+    
     public function testToEmlAddRecipient()
     {
-        $message = new \ApMail\Message();
+        $message = $this->newMessage();
         $message->addRecipient('mymail@example.org', 'John Doe');
         $eml = $message->toEml();
         $this->assertContains('To: John Doe <mymail@example.org>', $eml);
 
-        $message = new \ApMail\Message();
+        $message = Mailer()->newTextMessage();
         $message->addRecipient('mymail@example.org');
         $eml = $message->toEml();
         $this->assertContains('To: mymail@example.org', $eml);
@@ -19,7 +24,7 @@ class MessageTest extends \PHPUnit\Framework\TestCase
 
     public function testToEmlAddRelatedString()
     {
-        $message = new \ApMail\Message();
+        $message = $this->newMessage();
         $message->addRelatedString('Тестовая строка', 'test_1');
 
         $eml = $message->toEml();
@@ -31,7 +36,7 @@ class MessageTest extends \PHPUnit\Framework\TestCase
 
     public function testToEmlAddRelatedFile()
     {
-        $message = new \ApMail\Message();
+        $message = $this->newMessage();
         $filePath = __DIR__ . '/fixture/test_attachment_file.txt';
         $message->addRelatedFile($filePath);
 
@@ -44,7 +49,7 @@ class MessageTest extends \PHPUnit\Framework\TestCase
 
     public function testToEmlIsHtmlContent()
     {
-        $message = new \ApMail\Message();
+        $message = $this->newMessage();
         $htmlContent = file_get_contents(__DIR__ . '/fixture/content_is_html__for_email.html');
         $message->setContent($htmlContent);
 

@@ -6,13 +6,13 @@
 namespace {
     if (!function_exists('Mailer')) {
         /**
-         * @return \ApMail\Mailer
+         * @return \ApMailer\Mailer
          */
         function Mailer() {
             static $mailer;
             
             if (is_null($mailer)) {
-                $mailer = new ApMail\Mailer();
+                $mailer = new ApMailer\Mailer();
             }
             
             return $mailer;
@@ -20,7 +20,7 @@ namespace {
     }
 }
 
-namespace ApMail {
+namespace ApMailer {
     
     class Mailer
     {

@@ -7,14 +7,14 @@ class MessageTest extends \PHPUnit\Framework\TestCase
     public function testToEmlAddRecipient()
     {
         $message = new \ApMail\Message();
-        $message->addRecipient('test@test.test', 'Ivanov');
+        $message->addRecipient('mymail@example.org', 'John Doe');
         $eml = $message->toEml();
-        $this->assertContains('To: Ivanov <test@test.test>', $eml);
+        $this->assertContains('To: John Doe <mymail@example.org>', $eml);
 
         $message = new \ApMail\Message();
-        $message->addRecipient('test@test.test');
+        $message->addRecipient('mymail@example.org');
         $eml = $message->toEml();
-        $this->assertContains('To: test@test.test', $eml);
+        $this->assertContains('To: mymail@example.org', $eml);
     }
 
     public function testToEmlAddRelatedString()

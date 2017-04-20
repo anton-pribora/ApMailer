@@ -72,7 +72,7 @@ namespace ApMailer {
                     $error = sprintf('Cообщение %s для %s не было доставлено через %s. Ошибка: %s',
                         $message->getId(),
                         $message->getRecipients(', '),
-                        get_class($transport),
+                        $transport->name(),
                         $transport->getLastError()
                     );
                     
@@ -210,7 +210,7 @@ namespace ApMailer {
                 
                 if (!$transport->send($message)) {
                     $this->launchTriggers('error', $message, $transport, $this);
-                    $this->errors[] = $transport->getLastError();
+                    $this->errors[] = $transport->name() .': '. $transport->getLastError();
                 }
             }
             
@@ -252,13 +252,19 @@ namespace ApMailer {
     
     interface TransportInterface
     {
+        public function name();
         public function send(Message $message);
-        
         public function getLastError();
     }
     
     class Exception extends \Exception
     {
+    }
+    
+    function lastPhpErrorMessage($default = '')
+    {
+        $error = error_get_last();
+        return isset($error['message']) ? $error['message'] : $default;
     }
     
     class Smtp implements TransportInterface
@@ -293,6 +299,11 @@ namespace ApMailer {
             }
         }
         
+        public function name()
+        {
+            return __CLASS__;
+        }
+        
         public function getLastError()
         {
             return $this->lastError;
@@ -306,31 +317,31 @@ namespace ApMailer {
                 $this->openSocket();
                 
                 if ($this->smtpAuth) {
-                    $this->smtpSend(250, 'EHLO [192.168.0.1]');
-                    $this->smtpSend(334, 'AUTH LOGIN');
-                    $this->smtpSend(334, base64_encode($this->login));
-                    $this->smtpSend(235, base64_encode($this->password));
+                    $this->smtpSend(250, 'EHLO [192.168.0.1]', 'Соединение с сервером с авторизацией');
+                    $this->smtpSend(334, 'AUTH LOGIN', 'Авторизация');
+                    $this->smtpSend(334, base64_encode($this->login), 'Авторизация');
+                    $this->smtpSend(235, base64_encode($this->password), 'Авторизация');
                 }
                 else {
-                    $this->smtpSend(250, 'HELO [192.168.0.1]');
+                    $this->smtpSend(250, 'HELO [192.168.0.1]', 'Соединение с сервером без авторизации');
                 }
                 
-                $this->smtpSend(250, 'MAIL FROM:<%s>', $message->getSenderEmail());
+                $this->smtpSend(250, "MAIL FROM:<{$message->getSenderEmail()}>", 'Объявление отправителя');
                 
                 foreach ($message->getRecipientsEmailOnly() as $recipient) {
-                    $this->smtpSend(250, 'RCPT TO:<%s>', $recipient);
+                    $this->smtpSend(250, "RCPT TO:<{$recipient}>", 'Объявление получателя');
                 }
                 
-                $this->smtpSend(354, 'DATA');
-                $this->smtpSend(250, $message . "\r\n.");
-                $this->smtpSend(221, 'QUIT');
+                $this->smtpSend(354, 'DATA', 'Отправление письма');
+                $this->smtpSend(250, $message . "\r\n.", 'Отправление письма');
+                $this->smtpSend(221, 'QUIT', 'Завершение');
                 
                 $this->closeSocket();
             }
             catch (Exception $e) {
                 $this->closeSocket();
                 
-                $this->lastError     = 'SMTP Error '. $e->getCode() .': '. $e->getMessage();
+                $this->lastError     = $e->getCode() .': '. $e->getMessage();
                 $this->lastErrorCode = $e->getCode();
                 
                 return false;
@@ -369,12 +380,8 @@ namespace ApMailer {
             }
         }
         
-        private function smtpSend($expectedCode, $command, ...$args)
+        private function smtpSend($expectedCode, $command, $stage)
         {
-            if ($args) {
-                $command = sprintf($command, ...$args);
-            }
-            
             $this->socketWrite($command ."\r\n");
             
             while (!feof($this->socket)) {
@@ -384,9 +391,10 @@ namespace ApMailer {
                     list(, $code, $text) = $matches;
                     
                     if ($code != $expectedCode) {
-                        throw new Exception(sprintf('Cервер вернул неожиданный ответ: %s. Запрос: %s',
-                            $line,
-                            $command
+                        throw new Exception(sprintf('На этапе "%s" ожидался код %s, но сервер вернул %s',
+                            $stage,
+                            $expectedCode,
+                            $line
                         ), 102);
                     }
                     
@@ -406,21 +414,21 @@ namespace ApMailer {
         
         private function socketWrite($data)
         {
-            if (!fwrite($this->socket, $data)) {
+            if (!@fwrite($this->socket, $data)) {
                 throw new Exception(sprintf('Не удалось записать данные в сокет: %s. Ошибка: %s',
                     $data,
-                    error_get_last()['message']
+                    lastPhpErrorMessage('неизвестная ошибка сокета')
                 ), 103);
             }
         }
         
         private function socketRead()
         {
-            $data = fgets($this->socket);
+            $data = @fgets($this->socket);
             
             if ($data === false) {
                 throw new Exception(sprintf('Не удалось считать данные из сокета. Ошибка: %s',
-                    error_get_last()['message']
+                    lastPhpErrorMessage('неизвестная ошибка сокета')
                 ), 104);
             }
             
@@ -439,6 +447,11 @@ namespace ApMailer {
             }
         }
         
+        public function name()
+        {
+            return __CLASS__;
+        }
+        
         public function send(Message $message)
         {
             $this->lastError = null;
@@ -451,14 +464,7 @@ namespace ApMailer {
             $result = @mail($recipients, $subject, $body, $headers);
             
             if (!$result) {
-                $error = error_get_last();
-                
-                if ($error) {
-                    $this->lastError = 'PhpMail:'. $error['message'];
-                }
-                else {
-                    $this->lastError = 'PhpMail: Неизвестная ошибка';
-                }
+                $this->lastError = lastPhpErrorMessage('неизвестная ошибка');
             }
             
             return $result;
@@ -483,6 +489,12 @@ namespace ApMailer {
                 $this->saveDir = isset($options['dir']) ? rtrim($options['dir'], '/') : null;
             }
         }
+        
+        public function name()
+        {
+            return __CLASS__;
+        }
+        
         
         public function setSaveDir($path)
         {
@@ -509,7 +521,7 @@ namespace ApMailer {
             
             if ($this->saveDir && !file_exists($this->saveDir) && $this->createDir) {
                 if (!@mkdir($this->saveDir, 0755, true)) {
-                    $this->lastError = 'Can\'t create dir '. $this->saveDir;
+                    $this->lastError = "Не удалось создать папку {$this->saveDir} по причине: ". lastPhpErrorMessage('неизвестно');
                     return false;
                 }
             }
@@ -517,7 +529,7 @@ namespace ApMailer {
             $result = @file_put_contents($filename, (string) $message);
             
             if ($result === false) {
-                $this->lastError = error_get_last()['message'];
+                $this->lastError = lastPhpErrorMessage('неизвестная ошибка');
             }
             
             return $result !== false;

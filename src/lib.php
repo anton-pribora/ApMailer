@@ -279,7 +279,7 @@ namespace ApMail {
         {
             if ( $options ) {
                 $opt  = function($name, $default = null) use ($options) { return isset($options[$name]) ? $options[$name] : $default; };
-                $bool = function($name, $default = false) use ($opt) { return in_array($opt($name, $default), ['1', 'true', true, 1]); };
+                $bool = function($name, $default = false) use ($opt) { return in_array((string) $opt($name, $default), ['true', '1']); };
                 
                 $this->login    = $opt('login'   , $this->login);
                 $this->password = $opt('password', $this->password);

@@ -130,8 +130,8 @@ tinymce.init({
             <label>
               SSL
               <select class="form-control" name="config[transports][smtp][ssl]">
-                <option value="true" <?=$configValue('transports.1.ssl') == 'true' ? 'selected' : ''?>>Да</option>
-                <option value="false" <?=$configValue('transports.1.ssl') == 'false' ? 'selected' : ''?>>Нет</option>
+                <option value="true" <?=$configValue('transports.smtp.ssl') == 'true' ? 'selected' : ''?>>Да</option>
+                <option value="false" <?=$configValue('transports.smtp.ssl') == 'false' ? 'selected' : ''?>>Нет</option>
               </select>
             </label>
             <label>

@@ -111,6 +111,12 @@ namespace ApMailer {
             return new $class($config);
         }
         
+        public function addTransport(TransportInterface $transport)
+        {
+            $this->layer->appendTranspport($transport);
+            return $this;
+        }
+        
         public function newHtmlMessage()
         {
             return new Message();

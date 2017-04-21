@@ -109,3 +109,24 @@ $ uname -a | ./mailer.phar -r yourmail@example.com -s 'My system' --html \
   -t '</body></html>' \
   -d
 ````
+
+Пример конфига:
+````shell
+$ ./mailer.phar --config-example
+Пример конфигурационного файла для почтовика.
+
+<?php
+
+return [
+    'defaultFrom' => 'mymail@example.org',
+    'onError'     => function($error, $message, $transport) { echo $error; },
+    'afterSend'   => function($text, $message, $layer) { echo $text; },
+    'transports'  => [
+        // Сохранение всех писем в папке
+        ['file', 'dir'  => __DIR__ .'/mails'],
+        
+        // Отправка писем через Yandex, используя SSL и авторизацию
+        ['smtp', 'host' => 'smtp.yandex.ru', 'ssl' => true, 'port' => '465', 'login' => '****@yandex.ru', 'password' => '******'],
+    ],
+];
+````

@@ -17,10 +17,11 @@ $params = [
     [''  , '--config-example', false, 'Показать пример конфига'],
     ['-h', '--help'          , false, 'Показать справочную информацию'],
     ['-v', '--version'       , false, 'Показать версию приложения'],
+    [''  , '--debug'         , false, 'Выводить отладочную информацию'],
 ];
 
-$assemblyPath = basename(get_included_files()[0]);
-$assemblyDir  = dirname($assemblyPath);
+$assemblyPath = get_included_files()[0];
+$assemblyDir  = dirname(get_included_files()[0]);
 $assemblyFile = basename($assemblyPath);
 $configName   = 'mailer.config.php';
 
@@ -78,22 +79,6 @@ EXAMPLE
     exit;
 };
 
-$error = function ($message) {
-    file_put_contents('php://stderr', $message . PHP_EOL);
-};
-
-$warning = function ($message) {
-    file_put_contents('php://stderr', $message . PHP_EOL);
-};
-
-$output = function ($message) {
-    file_put_contents('php://stdout', $message . PHP_EOL);
-};
-
-$debug = function ($message) {
-    
-};
-
 $parseOpts = function() use ($params) {
     $shortopts = [];
     $longopts  = [];
@@ -134,6 +119,26 @@ $hasParam = function(...$names) use ($opts) {
     
     return false;
 };
+
+$error = function ($message) {
+    file_put_contents('php://stderr', $message . PHP_EOL);
+};
+
+$warning = function ($message) {
+    file_put_contents('php://stderr', $message . PHP_EOL);
+};
+
+$output = function ($message) {
+    file_put_contents('php://stdout', $message . PHP_EOL);
+};
+
+if ($hasParam('debug')) {
+    $debug = function ($message) {
+        echo "[DEBUG] $message\n";
+    };
+} else {
+    $debug = function () {};
+}
 
 if ($hasParam('h', 'help')) {
     $help();
@@ -204,14 +209,15 @@ $config = [];
 
 $configFiles = array_merge([
     "$assemblyDir/mailer.config.php",
-    "mailer.config.php",
+    "./mailer.config.php",
 ], $param('c', 'config'));
 
 foreach ($configFiles as $file) {
+    $debug("Ищем конфиг $file");
     $realpath = realpath($file);
     
     if ($realpath) {
-        $debug("Загрузка конфига $file -> $realpath");
+        $debug("Загрузка конфига $realpath");
         $result = include $realpath;
         
         if (is_array($result)) {

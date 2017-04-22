@@ -206,12 +206,11 @@ namespace ApMailer {
             $this->errors = [];
             
             $this->launchTriggers('beforeSend', $message, $this);
-            
+
+            /* @var $transport TransportInterface */
             foreach ($this->transports as list($transport, $filter)) {
-                if ($filter) {
-                    if (!$filter($message)) {
-                        continue;
-                    }
+                if ($filter && !$filter($message)) {
+                    continue;
                 }
                 
                 if (!$transport->send($message)) {
@@ -258,8 +257,24 @@ namespace ApMailer {
     
     interface TransportInterface
     {
+        /**
+         * Название транспорта.
+         *
+         * @return string
+         */
         public function name();
+
+        /**
+         * Отправление сообщения.
+         *
+         * @param \ApMailer\Message $message
+         * @return bool
+         */
         public function send(Message $message);
+
+        /**
+         * Последняя ошибка.
+         */
         public function getLastError();
     }
     
@@ -304,17 +319,26 @@ namespace ApMailer {
                 $this->smtpAuth = $bool('auth', strlen($this->login) > 0);
             }
         }
-        
+
+        /**
+         * {@inheritdoc}
+         */
         public function name()
         {
             return __CLASS__;
         }
-        
+
+        /**
+         * {@inheritdoc}
+         */
         public function getLastError()
         {
             return $this->lastError;
         }
-        
+
+        /**
+         * {@inheritdoc}
+         */
         public function send(Message $message)
         {
             $this->lastError = null;

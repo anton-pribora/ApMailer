@@ -274,6 +274,7 @@ namespace ApMailer {
 
         /**
          * Последняя ошибка.
+         * @return string
          */
         public function getLastError();
     }

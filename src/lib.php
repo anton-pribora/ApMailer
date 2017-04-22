@@ -209,8 +209,10 @@ namespace ApMailer {
 
             /* @var $transport TransportInterface */
             foreach ($this->transports as list($transport, $filter)) {
-                if ($filter && !$filter($message)) {
-                    continue;
+                if ($filter) {
+                    if (!$filter($message)) {
+                        continue;
+                    }
                 }
                 
                 if (!$transport->send($message)) {

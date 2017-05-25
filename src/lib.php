@@ -633,7 +633,7 @@ namespace ApMailer {
     
         public function setContentTypeTextPlain()
         {
-            $this->content->setContentType('text/plainl; charset='. $this->charset);
+            $this->content->setContentType('text/plain; charset='. $this->charset);
             return $this;
         }
     

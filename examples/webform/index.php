@@ -37,6 +37,7 @@ $configValue = function ($key, $default = NULL) use ($config) {
 $disableSmtp    = param('disableSmtp', true);
 $messageFrom    = param('from'       , '');
 $messageTo      = param('to'         , 'test@example.org');
+$messageReplyTo = param('reply-to'   , 'another-mail@example.org');
 $messageSubject = param('subject'    , 'Re: очень важная новость');
 $messageText    = param('text'       , '<p>Дорогой друг,</p><p>Спешу поделиться радостным известием, к нам едет ревизор!</p>');
 
@@ -59,6 +60,10 @@ if (param('send')) {
     
     if ($messageTo) {
         $message->addRecipient($messageTo);
+    }
+    
+    if ($messageReplyTo) {
+        $message->addReplyTo($messageReplyTo);
     }
     
     $message->addContent(file_get_contents('mail-header.html'));
@@ -195,6 +200,13 @@ tinymce.init({
           <label class="col-2 col-form-label">Кому</label>
           <div class="col-10">
             <input class="form-control" type="text" name="to" value="<?=html($messageTo)?>">
+          </div>
+        </div>
+        
+        <div class="form-group row">
+          <label class="col-2 col-form-label">Адрес для ответа (Reply-To)</label>
+          <div class="col-10">
+            <input class="form-control" type="text" name="reply-to" value="<?=html($messageReplyTo)?>">
           </div>
         </div>
         

@@ -24,7 +24,7 @@ namespace ApMailer {
     
     class Mailer
     {
-        private $version = '1.0.1';
+        private $version = '1.0.2';
         
         private $layer;
         
@@ -596,6 +596,7 @@ namespace ApMailer {
         private $subject     = null;
         private $recipients  = [];
         private $copyTo      = [];
+        private $replyTo     = [];
         private $hiddenCopy  = [];
         private $content     = null;
         private $senderEmail = null;
@@ -687,9 +688,23 @@ namespace ApMailer {
                 $this->headers->add('Cc', $this->headers->encode($name) ." <$mail>");
             }
             else {
-                $this->hiddenCopy[] = $mail;
+                $this->copyTo[] = $mail;
                 $this->headers->add('Cc', $mail);
             }
+    
+            return $this;
+        }
+        
+        public function addReplyTo($mail, $name = null)
+        {
+            if ($name) {
+                $this->replyTo[] = $this->headers->encode($name) ." <$mail>";
+            }
+            else {
+                $this->replyTo[] = $mail;
+            }
+            
+            $this->headers->set('Reply-To', join(', ', $this->replyTo));
     
             return $this;
         }

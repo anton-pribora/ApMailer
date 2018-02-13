@@ -9,6 +9,7 @@ $params = [
     ['-s', '--subject'       , true , 'Тема сообщения'],
     ['-r', '--recipient'     , true , 'Получатель письма'],
     ['-f', '--from'          , true , 'Отправитель письма'],
+    [''  , '--reply-to'      , true , 'Адрес для ответа на письмо'],
     ['-c', '--config'        , true , 'Путь к конфигу с настройками почтовика'],
     ['-a', '--attach'        , true , 'Вложить файл в письмо как Attachment'],
     ['-i', '--related'       , true , 'Включить файл в письмо как Related (индентификатором при этом будет название файла)'],
@@ -176,6 +177,10 @@ foreach ($param('r', 'recipient') as $recipient) {
 
 foreach ($param('f', 'from') as $from) {
     $message->setSenderEmail($from);
+}
+
+foreach ($param('reply-to') as $replyTo) {
+    $message->addReplyTo($replyTo);
 }
 
 foreach ($param('a', 'attach') as $attchment) {

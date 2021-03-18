@@ -612,9 +612,8 @@ namespace ApMailer {
             $this->content = new Part();
             $this->setContentType('text/html; charset='. $this->charset);
             $this->headers
-                ->set('Mime-Version', '1.0')
+                ->set('MIME-Version', '1.0')
                 ->set('Date'        , date(DATE_RFC1123))
-                ->set('Message-ID'  , sprintf('<%s.%s@%s>', (string) time(), uniqid(), gethostname()))
             ;
         }
     
